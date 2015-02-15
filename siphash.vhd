@@ -14,8 +14,9 @@ entity siphash is
     init   : in std_logic;
     load_k : in std_logic;
 
-    ready : buffer std_logic;
-    hash  : out    std_logic_vector(63 downto 0)
+    init_ready : buffer std_logic;
+    hash_ready : out    std_logic;
+    hash       : out    std_logic_vector(63 downto 0)
     );
 end entity;
 
@@ -33,7 +34,6 @@ architecture rtl of siphash is
   signal block_counter : integer range 0 to 31;
 
   signal this_m, last_m : std_logic_vector(63 downto 0);
-  signal hash_ready     : std_logic;
 begin
 
   siprounds : for i in 0 to c-1 generate
@@ -42,7 +42,10 @@ begin
                 v0(i+1), v1(i+1), v2(i+1), v3(i+1));
   end generate;
 
-  total_bytes <= std_logic_vector(to_unsigned(block_counter, 5)) & b(2 downto 0);
+  total_bytes(7 downto 3) <= (others => '0') when init = '1' else
+                             std_logic_vector(to_unsigned(block_counter, 5));
+
+  total_bytes(2 downto 0) <= b(2 downto 0);
 
   process(m, b, total_bytes)
   begin
@@ -65,7 +68,7 @@ begin
     end if;
   end process;
 
-  process (rst_n, clk)
+  process (rst_n, clk, init)
   begin
 
     if rst_n = '0' then
@@ -77,14 +80,14 @@ begin
       last_m        <= (others => '0');
       block_counter <= 0;
       hash_ready    <= '0';
-      ready         <= '0';
+      init_ready    <= '0';
       hash          <= (others => '0');
 
     elsif rising_edge(clk) then
 
       last_m        <= this_m;
       block_counter <= 0;
-      hash_ready    <= '0';
+      init_ready    <= '0';
 
       v0(0) <= v0(c);
       v1(0) <= v1(c);
@@ -94,38 +97,41 @@ begin
       case state is
 
         when idle =>
-          if init = '1' then
-            v0(0)         <= k(0) xor x"736f6d6570736575";
-            v1(0)         <= k(1) xor x"646f72616e646f6d";
-            v2(0)         <= k(0) xor x"6c7967656e657261";
-            v3(0)         <= k(1) xor x"7465646279746573" xor this_m;
-            block_counter <= 1;
-            ready         <= '0';
-          else
-            ready <= '1';
-          end if;
+
+          init_ready <= '1';
 
         when compression =>
 
           v0(0)         <= v0(c) xor last_m;
           v3(0)         <= v3(c) xor this_m;
           block_counter <= block_counter + 1;
+          hash_ready    <= '0';
 
         when last_block =>
 
-          v0(0) <= v0(c) xor last_m;
-          v2(0) <= v2(c) xor x"ff";
+          v0(0)      <= v0(c) xor last_m;
+          v2(0)      <= v2(c) xor x"ff";
+          hash_ready <= '0';
 
         when finalization =>
 
-          if hash_ready = '1' then
-            hash  <= v0(c) xor v1(c) xor v2(c) xor v3(c);
-            ready <= '1';
+          if init_ready = '1' then
+            hash       <= v0(c) xor v1(c) xor v2(c) xor v3(c);
+            hash_ready <= '1';
           end if;
 
-          hash_ready <= '1';
+          init_ready <= '1';
 
       end case;
+
+      if init = '1' then
+        v0(0)         <= k(0) xor x"736f6d6570736575";
+        v1(0)         <= k(1) xor x"646f72616e646f6d";
+        v2(0)         <= k(0) xor x"6c7967656e657261";
+        v3(0)         <= k(1) xor x"7465646279746573" xor this_m;
+        block_counter <= 1;
+        init_ready    <= '0';
+      end if;
 
     end if;
   end process;
@@ -135,7 +141,7 @@ begin
     if rst_n = '0' then
       state <= idle;
     elsif rising_edge(clk) then
-      if (state = idle and init = '1') or state = compression then
+      if init = '1' or state = compression then
         if b(3) = '1' then
           state <= compression;
         else
@@ -143,7 +149,7 @@ begin
         end if;
       elsif state = last_block then
         state <= finalization;
-      elsif state = finalization and hash_ready = '1' then
+      elsif state = finalization and init_ready = '1' then
         state <= idle;
       end if;
     end if;
