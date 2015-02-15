@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 use work.sipround_package.all;
 
 entity siphash is
+  generic ( c: integer := 2);
   port (
     m : in std_logic_vector (63 downto 0);
     b : in std_logic_vector (3 downto 0);
@@ -21,7 +22,6 @@ entity siphash is
 end entity;
 
 architecture rtl of siphash is
-  constant c   : integer := 2;
   type state_t is (idle, compression, last_block, finalization);
   signal state : state_t;
 
