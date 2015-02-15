@@ -44,7 +44,13 @@ begin
 
   total_bytes <= std_logic_vector(to_unsigned(block_counter, 5)) & b(2 downto 0);
 
-  this_m <= m when b(3) = '1' else total_bytes & m(55 downto 0);
+  process(m, b, total_bytes)
+  begin
+    this_m               <= (others => '0');
+    this_m(63 downto 56) <= total_bytes;
+    this_m(8*to_integer(unsigned(b))-1 downto 0)
+      <= m(8*to_integer(unsigned(b))-1 downto 0);
+  end process;
 
   process(rst_n, clk)
   begin
