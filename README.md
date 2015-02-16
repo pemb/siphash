@@ -75,12 +75,12 @@ hash calculation is aborted and a new calculation begins.
 
 At every clock provide a block of up to 64 bits to be hashed in the input
 `m`. Byte order is little-endian. `b` must be set to the number of valid bytes
-present in the input block, until the last block.
+present in the input block, until the last block. Unused bytes must be driven 0.
 
 End of input is signaled by `b` with a value less than 8, indicating the last
 block of input. If the last input block is 64 bits in size, this must be treated
-as if a 0 bit block followed, so that after the last valid input block, `b` must
-be driven 0 for another clock cycle.
+as if a 0 bit block followed, so that after the last valid input block, `b` and
+`m` must be driven 0 for another clock cycle.
 
 ##### Output:
 
@@ -112,8 +112,8 @@ will see dramatic performance improvements.
 Using a Cyclone II FPGA as target (EP2C20F484C7), the compilation results are as
 follows:
 
-* Maximum frequency: 43.34 MHz
-* Logic elements: 1.904
+* Maximum frequency: 44.47 MHz
+* Logic elements: 1.655
 * Registers: 523
 
 ## Reference
