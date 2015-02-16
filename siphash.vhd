@@ -32,6 +32,7 @@ architecture rtl of siphash is
   signal k              : v_array(1 downto 0);
 
   signal block_counter : unsigned(4 downto 0);
+  signal current_count : unsigned(4 downto 0);
 
   signal this_m, last_m : std_logic_vector(63 downto 0);
 begin
@@ -42,10 +43,9 @@ begin
                 v0(i+1), v1(i+1), v2(i+1), v3(i+1));
   end generate;
 
-  total_bytes(7 downto 3) <= (others => '0') when init = '1' else
-                             std_logic_vector(block_counter);
+  current_count <= (others => '0') when init = '1' else block_counter;
 
-  total_bytes(2 downto 0) <= b(2 downto 0);
+  total_bytes <= std_logic_vector(current_count) & b(2 downto 0);
 
   process(m, b, total_bytes)
   begin
@@ -86,7 +86,7 @@ begin
     elsif rising_edge(clk) then
 
       last_m        <= this_m;
-      block_counter <= (others => '0');
+      block_counter <= current_count + 1;
       init_ready    <= '0';
 
       v0(0) <= v0(c);
@@ -104,7 +104,6 @@ begin
 
           v0(0)         <= v0(c) xor last_m;
           v3(0)         <= v3(c) xor this_m;
-          block_counter <= block_counter + 1;
           hash_ready    <= '0';
 
         when last_block =>
@@ -129,7 +128,6 @@ begin
         v1(0)         <= k(1) xor x"646f72616e646f6d";
         v2(0)         <= k(0) xor x"6c7967656e657261";
         v3(0)         <= k(1) xor x"7465646279746573" xor this_m;
-        block_counter <= to_unsigned(1, block_counter'length);
         init_ready    <= '0';
       end if;
 
