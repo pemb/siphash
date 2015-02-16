@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 use work.sipround_package.all;
 
 entity siphash is
-  generic ( c: integer := 2);
+  generic (c : integer := 2);
   port (
     m : in std_logic_vector (63 downto 0);
     b : in std_logic_vector (3 downto 0);
@@ -15,9 +15,8 @@ entity siphash is
     init   : in std_logic;
     load_k : in std_logic;
 
-    init_ready : buffer std_logic;
-    hash_ready : out    std_logic;
-    hash       : out    std_logic_vector(63 downto 0)
+    init_ready, hash_ready : buffer std_logic;
+    hash                   : out    std_logic_vector(63 downto 0)
     );
 end entity;
 
@@ -88,6 +87,7 @@ begin
       last_m        <= this_m;
       block_counter <= current_count + 1;
       init_ready    <= '0';
+      hash_ready    <= '0';
 
       v0(0) <= v0(c);
       v1(0) <= v1(c);
@@ -99,18 +99,17 @@ begin
         when idle =>
 
           init_ready <= '1';
+          hash_ready <= hash_ready;
 
         when compression =>
 
-          v0(0)         <= v0(c) xor last_m;
-          v3(0)         <= v3(c) xor this_m;
-          hash_ready    <= '0';
+          v0(0) <= v0(c) xor last_m;
+          v3(0) <= v3(c) xor this_m;
 
         when last_block =>
 
-          v0(0)      <= v0(c) xor last_m;
-          v2(0)      <= v2(c) xor x"ff";
-          hash_ready <= '0';
+          v0(0) <= v0(c) xor last_m;
+          v2(0) <= v2(c) xor x"ff";
 
         when finalization =>
 
@@ -124,11 +123,11 @@ begin
       end case;
 
       if init = '1' then
-        v0(0)         <= k(0) xor x"736f6d6570736575";
-        v1(0)         <= k(1) xor x"646f72616e646f6d";
-        v2(0)         <= k(0) xor x"6c7967656e657261";
-        v3(0)         <= k(1) xor x"7465646279746573" xor this_m;
-        init_ready    <= '0';
+        v0(0)      <= k(0) xor x"736f6d6570736575";
+        v1(0)      <= k(1) xor x"646f72616e646f6d";
+        v2(0)      <= k(0) xor x"6c7967656e657261";
+        v3(0)      <= k(1) xor x"7465646279746573" xor this_m;
+        init_ready <= '0';
       end if;
 
     end if;
