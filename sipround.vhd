@@ -49,9 +49,9 @@ use ieee.std_logic_1164.all;
 
 package sipround_package is
   component sipround is
-      port (
-    v0_in, v1_in, v2_in, v3_in     : in  std_logic_vector(63 downto 0);
-    v0_out, v1_out, v2_out, v3_out : out std_logic_vector(63 downto 0)
-    );
+    port (
+      v0_in, v1_in, v2_in, v3_in     : in  std_logic_vector(63 downto 0);
+      v0_out, v1_out, v2_out, v3_out : out std_logic_vector(63 downto 0)
+      );
   end component;
 end package;
