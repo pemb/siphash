@@ -2,13 +2,13 @@ library ieee;
 
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use work.sipround_package.all;
+use work.siphash_package.all;
 
 entity siphash is
   generic (c : integer := 2);
   port (
-    m : in std_logic_vector (63 downto 0);
-    b : in std_logic_vector (3 downto 0);
+    m : in std_logic_vector (BLOCK_WIDTH-1 downto 0);
+    b : in std_logic_vector (BYTES_WIDTH-1 downto 0);
 
     rst_n  : in std_logic;
     clk    : in std_logic;
@@ -16,7 +16,7 @@ entity siphash is
     load_k : in std_logic;
 
     init_ready, hash_ready : buffer std_logic;
-    hash                   : out    std_logic_vector(63 downto 0)
+    hash                   : out    std_logic_vector(HASH_WIDTH-1 downto 0)
     );
 end entity;
 
@@ -24,16 +24,16 @@ architecture rtl of siphash is
   type state_t is (idle, compression, last_block, finalization);
   signal state : state_t;
 
-  signal total_bytes : std_logic_vector(7 downto 0);
+  signal total_bytes : std_logic_vector(LENGTH_WIDTH-1 downto 0);
 
-  type v_array is array (integer range <>) of std_logic_vector(63 downto 0);
   signal v0, v1, v2, v3 : v_array(c downto 0);
-  signal k              : v_array(1 downto 0);
 
-  signal block_counter : unsigned(4 downto 0);
-  signal current_count : unsigned(4 downto 0);
+  signal k : std_logic_vector(KEY_WIDTH-1 downto 0);
 
-  signal this_m, last_m : std_logic_vector(63 downto 0);
+  signal block_counter : unsigned(COUNT_WIDTH-1 downto 0);
+  signal current_count : unsigned(COUNT_WIDTH-1 downto 0);
+
+  signal this_m, last_m : std_logic_vector(BLOCK_WIDTH-1 downto 0);
 begin
 
   siprounds : for i in 0 to c-1 generate
@@ -44,19 +44,20 @@ begin
 
   current_count <= (others => '0') when init = '1' else block_counter;
 
-  total_bytes <= std_logic_vector(current_count) & b(2 downto 0);
+  total_bytes <= std_logic_vector(current_count) & b(BYTES_WIDTH-2 downto 0);
 
-  this_m <= m when b(3) = '1' else total_bytes & m(55 downto 0);
+  this_m <= m when b(BYTES_WIDTH-1) = '1' else
+            total_bytes & m(BLOCK_WIDTH-LENGTH_WIDTH-1 downto 0);
 
   process(rst_n, clk)
   begin
 
     if rst_n = '0' then
-      k <= (others => (others => '0'));
+      k <= (others => '0');
     elsif rising_edge(clk) then
       if load_k = '1' then
-        k(1) <= m;
-        k(0) <= k(1);
+        k(KEY_WIDTH-1 downto BLOCK_WIDTH) <= m;
+        k(BLOCK_WIDTH-1 downto 0)         <= k(KEY_WIDTH-1 downto BLOCK_WIDTH);
       end if;
     end if;
   end process;
@@ -117,10 +118,10 @@ begin
       end case;
 
       if init = '1' then
-        v0(0)      <= k(0) xor x"736f6d6570736575";
-        v1(0)      <= k(1) xor x"646f72616e646f6d";
-        v2(0)      <= k(0) xor x"6c7967656e657261";
-        v3(0)      <= k(1) xor x"7465646279746573" xor this_m;
+        v0(0)      <= V0_INIT xor k(BLOCK_WIDTH-1 downto 0);
+        v1(0)      <= V1_INIT xor k(KEY_WIDTH-1 downto BLOCK_WIDTH);
+        v2(0)      <= V2_INIT xor k(BLOCK_WIDTH-1 downto 0);
+        v3(0)      <= V3_INIT xor k(KEY_WIDTH-1 downto BLOCK_WIDTH) xor this_m;
         init_ready <= '0';
       end if;
 
@@ -133,7 +134,7 @@ begin
       state <= idle;
     elsif rising_edge(clk) then
       if init = '1' or state = compression then
-        if b(3) = '1' then
+        if b(BYTES_WIDTH-1) = '1' then
           state <= compression;
         else
           state <= last_block;

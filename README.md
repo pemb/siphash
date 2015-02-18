@@ -112,8 +112,8 @@ will see dramatic performance improvements.
 Using a Cyclone II FPGA as target (EP2C20F484C7), the compilation results are as
 follows:
 
-* Maximum frequency: 44.47 MHz
-* Logic elements: 1.655
+* Maximum frequency: 44.65 MHz
+* Logic elements: 1.653
 * Registers: 523
 
 ## Reference

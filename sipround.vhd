@@ -1,18 +1,19 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.siphash_package.all;
 
 entity sipround is
   port (
-    v0_in, v1_in, v2_in, v3_in     : in  std_logic_vector(63 downto 0);
-    v0_out, v1_out, v2_out, v3_out : out std_logic_vector(63 downto 0)
+    v0_in, v1_in, v2_in, v3_in     : in  std_logic_vector(V_WIDTH-1 downto 0);
+    v0_out, v1_out, v2_out, v3_out : out std_logic_vector(V_WIDTH-1 downto 0)
     );
 end entity;
 
 architecture rtl of sipround is
 begin
   process(v0_in, v1_in, v2_in, v3_in)
-    variable v0, v1, v2, v3 : unsigned(63 downto 0);
+    variable v0, v1, v2, v3 : unsigned(V_WIDTH-1 downto 0);
   begin
     v0 := unsigned(v0_in);
     v1 := unsigned(v1_in);
@@ -44,14 +45,3 @@ begin
   end process;
 end;
 
-library ieee;
-use ieee.std_logic_1164.all;
-
-package sipround_package is
-  component sipround is
-    port (
-      v0_in, v1_in, v2_in, v3_in     : in  std_logic_vector(63 downto 0);
-      v0_out, v1_out, v2_out, v3_out : out std_logic_vector(63 downto 0)
-      );
-  end component;
-end package;
