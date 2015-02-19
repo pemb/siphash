@@ -97,7 +97,8 @@ soon as the previous hash calculation is complete.
 
 ## Test bench
 
-The included `Makefile` requires ghdl. Run make to compile:
+The included `Makefile` requires ghdl. Run make to compile (please don't use -j,
+ghdl gets confused):
 
     make
 
