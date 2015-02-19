@@ -4,7 +4,8 @@ I've written a VHDL implementation of the SipHash pseudorandom function, as
 described in the original paper by Jean-Philippe Aumasson and Daniel
 J. Bernstein.
 
-The implementation is validated against the test values provided in the paper.
+The implementation is validated against the test values provided in the paper
+and the C reference implementation.
 
 This implementation provides SipHash-c-2c, with the default of SipHash-2-4.
 
@@ -93,6 +94,19 @@ It should be noted that consecutive hash calculations may overlap by one clock
 cycle, because the `init_ready` signal is asserted before `hash_ready`.  If this
 happens, the `hash_ready` output will be asserted for a single clock cycle, as
 soon as the previous hash calculation is complete.
+
+## Test bench
+
+The included `Makefile` requires ghdl. Run make to compile:
+
+    make
+
+To run the test bench, run
+
+    make run
+
+which should print `test vector ok` if everything goes right. If any hashes
+fail, assertion error messages should be triggered.
 
 ## Implementation and performance considerations
 

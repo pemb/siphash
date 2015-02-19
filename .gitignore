@@ -19,3 +19,6 @@ output_files/
 *.qpf
 *.qsf
 *.sdc
+*.o
+*.cf
+tb_siphash
