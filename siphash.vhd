@@ -104,7 +104,7 @@ begin
         when last_block =>
 
           v0(0) <= v0(c) xor last_m;
-          v2(0) <= v2(c) xor x"ff";
+          v2(0) <= v2(c) xor V2_FINAL;
 
         when finalization =>
 

@@ -18,6 +18,8 @@ package siphash_package is
   constant V2_INIT : std_logic_vector := x"6c7967656e657261";
   constant V3_INIT : std_logic_vector := x"7465646279746573";
 
+  constant V2_FINAL : std_logic_vector := x"00000000000000ff";
+
   type v_array is array (integer range <>) of std_logic_vector(V_WIDTH-1 downto 0);
 
   component sipround is
@@ -26,4 +28,21 @@ package siphash_package is
       v0_out, v1_out, v2_out, v3_out : out std_logic_vector(V_WIDTH-1 downto 0)
       );
   end component;
+
+  component siphash is
+  generic (c : integer := 2);
+  port (
+    m : in std_logic_vector (BLOCK_WIDTH-1 downto 0);
+    b : in std_logic_vector (BYTES_WIDTH-1 downto 0);
+
+    rst_n  : in std_logic;
+    clk    : in std_logic;
+    init   : in std_logic;
+    load_k : in std_logic;
+
+    init_ready, hash_ready : buffer std_logic;
+    hash                   : out    std_logic_vector(HASH_WIDTH-1 downto 0)
+    );
+  end component;
+
 end package;
